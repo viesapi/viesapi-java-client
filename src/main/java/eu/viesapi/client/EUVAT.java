@@ -94,7 +94,6 @@ public class EUVAT {
 		map.put("ES", "ES[A-Z0-9]{9}");
 		map.put("FI", "FI\\d{8}");
 		map.put("FR", "FR[A-Z0-9]{2}\\d{9}");
-		map.put("GB", "GB[A-Z0-9]{5,12}");
 		map.put("HR", "HR\\d{11}");
 		map.put("HU", "HU\\d{8}");
 		map.put("IE", "IE[A-Z0-9]{8,9}");
@@ -110,5 +109,6 @@ public class EUVAT {
 		map.put("SE", "SE\\d{12}");
 		map.put("SI", "SI\\d{8}");
 		map.put("SK", "SK\\d{10}");
+		map.put("XI", "XI[A-Z0-9]{5,12}");
 	}
 }

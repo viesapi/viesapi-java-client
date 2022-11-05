@@ -5,7 +5,7 @@
 	
 	<groupId>eu.viesapi</groupId>
 	<artifactId>viesapi-client</artifactId>
-	<version>1.2.3</version>
+	<version>1.2.4</version>
 	
 	<name>viesapi-java-client</name>
 	<description>VIES API Service Client for Java</description>
