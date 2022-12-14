@@ -45,7 +45,7 @@ public class EUVAT {
 		number = number.replaceAll(" ", "");
 		number = number.trim().toUpperCase();
 
-		if (!number.matches("[A-Z]{2}[A-Z0-9]{2,12}")) {
+		if (!number.matches("[A-Z]{2}[A-Z0-9+*]{2,12}")) {
 			return null;
 		}
 
@@ -83,7 +83,7 @@ public class EUVAT {
 	
 	static {
 		map.put("AT", "ATU\\d{8}");
-		map.put("BE", "BE0\\d{9}");
+		map.put("BE", "BE[0-1]{1}\\d{9}");
 		map.put("BG", "BG\\d{9,10}");
 		map.put("CY", "CY\\d{8}[A-Z]{1}");
 		map.put("CZ", "CZ\\d{8,10}");
@@ -91,18 +91,18 @@ public class EUVAT {
 		map.put("DK", "DK\\d{8}");
 		map.put("EE", "EE\\d{9}");
 		map.put("EL", "EL\\d{9}");
-		map.put("ES", "ES[A-Z0-9]{9}");
+		map.put("ES", "ES[A-Z0-9]{1}\\d{7}[A-Z0-9]{1}");
 		map.put("FI", "FI\\d{8}");
 		map.put("FR", "FR[A-Z0-9]{2}\\d{9}");
 		map.put("HR", "HR\\d{11}");
 		map.put("HU", "HU\\d{8}");
-		map.put("IE", "IE[A-Z0-9]{8,9}");
+		map.put("IE", "IE[A-Z0-9+*]{8,9}");
 		map.put("IT", "IT\\d{11}");
 		map.put("LT", "LT\\d{9,12}");
 		map.put("LU", "LU\\d{8}");
 		map.put("LV", "LV\\d{11}");
 		map.put("MT", "MT\\d{8}");
-		map.put("NL", "NL\\d{9}B\\d{2}");
+		map.put("NL", "NL[A-Z0-9+*]{12}");
 		map.put("PL", "PL\\d{10}");
 		map.put("PT", "PT\\d{9}");
 		map.put("RO", "RO\\d{2,10}");

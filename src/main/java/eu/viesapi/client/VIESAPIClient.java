@@ -55,7 +55,7 @@ import org.w3c.dom.Node;
  */
 public class VIESAPIClient {
 	
-	public final static String VERSION = "1.2.4";
+	public final static String VERSION = "1.2.5";
 
 	public final static String PRODUCTION_URL = "https://viesapi.eu/api";
 	public final static String TEST_URL = "https://viesapi.eu/api-test";
