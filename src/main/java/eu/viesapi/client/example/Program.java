@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 NETCAT (www.netcat.pl)
+ * Copyright 2022-2023 NETCAT (www.netcat.pl)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  * 
  * @author NETCAT <firma@netcat.pl>
- * @copyright 2022 NETCAT (www.netcat.pl)
+ * @copyright 2022-2023 NETCAT (www.netcat.pl)
  * @license http://www.apache.org/licenses/LICENSE-2.0
  */
 
@@ -40,8 +40,7 @@ public class Program {
 			// Create client object and establish connection to the test system
 			VIESAPIClient viesapi = new VIESAPIClient();
 
-			String nip = "7171642051";
-			String nip_eu = "PL" + nip;
+			String nip_eu = "PL7171642051";
 
 			// Get current account status
 			AccountStatus account = viesapi.getAccountStatus();

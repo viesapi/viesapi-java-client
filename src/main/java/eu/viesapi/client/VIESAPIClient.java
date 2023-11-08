@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 NETCAT (www.netcat.pl)
+ * Copyright 2022-2023 NETCAT (www.netcat.pl)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,27 +14,14 @@
  * limitations under the License.
  * 
  * @author NETCAT <firma@netcat.pl>
- * @copyright 2022 NETCAT (www.netcat.pl)
+ * @copyright 2022-2023 NETCAT (www.netcat.pl)
  * @license http://www.apache.org/licenses/LICENSE-2.0
  */
 
 package eu.viesapi.client;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.Authenticator;
-import java.net.HttpURLConnection;
-import java.net.InetSocketAddress;
-import java.net.MalformedURLException;
-import java.net.Proxy;
-import java.net.URL;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
-import java.text.SimpleDateFormat;
-import java.util.*;
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -46,16 +33,25 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathFactory;
-
-import org.w3c.dom.Document;
-import org.w3c.dom.Node;
+import java.net.Authenticator;
+import java.net.HttpURLConnection;
+import java.net.InetSocketAddress;
+import java.net.MalformedURLException;
+import java.net.Proxy;
+import java.net.URL;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.Enumeration;
+import java.util.Properties;
 
 /**
  * VIES API service client
  */
 public class VIESAPIClient {
 	
-	public final static String VERSION = "1.2.5";
+	public final static String VERSION = "1.2.6";
 
 	public final static String PRODUCTION_URL = "https://viesapi.eu/api";
 	public final static String TEST_URL = "https://viesapi.eu/api-test";
@@ -190,25 +186,9 @@ public class VIESAPIClient {
 			String url = (this.url.toString() + "/get/vies/" + suffix);
 			
 			// prepare request
-			byte[] b = get(url);
-			
-			if (b == null) {
-				set(Error.CLI_CONNECT);
-				return null;
-			}
-			
-			// parse response
-			Document doc = dbf.newDocumentBuilder().parse(new ByteArrayInputStream(b));
+			Document doc = get(url);
 			
 			if (doc == null) {
-				set(Error.CLI_RESPONSE);
-				return null;
-			}
-			
-			String code = getString(doc, "/result/error/code", null);
-			
-			if (code != null) {
-				set(Integer.parseInt(code), getString(doc, "/result/error/description", null));
 				return null;
 			}
 
@@ -229,7 +209,8 @@ public class VIESAPIClient {
 			vies.setSource(getString(doc, "/result/vies/source", null));
 
 			return vies;
-		} catch (Exception ignored) {
+		} catch (Exception e) {
+			set(Error.CLI_EXCEPTION, e.getMessage());
 		}
 		
 		return null;
@@ -249,28 +230,12 @@ public class VIESAPIClient {
 			String url = (this.url.toString()  + "/check/account/status");
 			
 			// prepare request
-			byte[] b = get(url);
-			
-			if (b == null) {
-				set(Error.CLI_CONNECT);
-				return null;
-			}
-			
-			// parse response
-			Document doc = dbf.newDocumentBuilder().parse(new ByteArrayInputStream(b));
+			Document doc = get(url);
 			
 			if (doc == null) {
-				set(Error.CLI_RESPONSE);
 				return null;
 			}
 			
-			String code = getString(doc, "/result/error/code", null);
-			
-			if (code != null) {
-				set(Integer.parseInt(code), getString(doc, "/result/error/description", null));
-				return null;
-			}
-
 			AccountStatus status = new AccountStatus();
 			
 			status.setUid(getString(doc, "/result/account/uid", null));
@@ -299,7 +264,8 @@ public class VIESAPIClient {
 			status.setTotalCount(Integer.parseInt(getString(doc, "/result/account/requests/total", "0")));
 			
 			return status;
-		} catch (Exception ignored) {
+		} catch (Exception e) {
+			set(Error.CLI_EXCEPTION, e.getMessage());
 		}
 		
 		return null;
@@ -354,11 +320,12 @@ public class VIESAPIClient {
 
 	/**
 	 * Create authorization header
+	 * @param headers object with HTTP headers
 	 * @param method HTTP method name
 	 * @param url target URL address
-	 * @return authorization information
+	 * @return true if succeeded
 	 */
-	private Properties auth(String method, URL url)
+	private boolean auth(Properties headers, String method, URL url)
 	{
 		try {
 			// prepare auth header
@@ -377,20 +344,18 @@ public class VIESAPIClient {
 			String mac = getMac(str);
 			
 			if (mac == null) {
-				return null;
+				return false;
 			}
 			
 			// prepare request
-			Properties p = new Properties();
-			
-			p.setProperty("Authorization", "MAC id=\"" + id + "\", ts=\"" + ts + "\", nonce=\""
+			headers.setProperty("Authorization", "MAC id=\"" + id + "\", ts=\"" + ts + "\", nonce=\""
 				+ nonce + "\", mac=\"" + mac + "\"");
 			
-			return p;
+			return true;
 		} catch (Exception ignored) {
 		}
 		
-		return null;
+		return false;
 	}
 
 	/**
@@ -399,28 +364,27 @@ public class VIESAPIClient {
 	 */
 	private void userAgent(Properties headers)
 	{
-		headers.setProperty("User-Agent", "NIP24Client/" + VERSION + " Java/" + System.getProperty("java.version"));
+		headers.setProperty("User-Agent", "VIESAPIClient/" + VERSION + " Java/" + System.getProperty("java.version"));
 	}
 
 	/**
 	 * Perform HTTP GET
 	 * @param url request URL
-	 * @return response or null
+	 * @return XML response or null
 	 */
-	private byte[] get(String url)
+	private Document get(String url)
 	{
 		boolean set = false;
 		
 		try {
-			if (url == null || url.length() == 0) {
+			if (url == null || url.isEmpty()) {
+				set(Error.CLI_CONNECT);
 				return null;
 			}
 			
 			URL u = new URL(url);
 			Proxy p = null;
 			
-			byte[] out = null;
-
 			if (wp != null && !wp.isExcluded(u.getHost())) {
 				p = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(wp.getHost(), wp.getPort()));
 				
@@ -428,17 +392,20 @@ public class VIESAPIClient {
 				set = true;
 			}
 			
-			// auth
-			Properties headers = auth("GET", u);
-			
-			if (headers == null) {
+			// headers
+			Properties headers = new Properties();
+
+			headers.setProperty("Accept", "text/xml");
+
+			if (!auth(headers, "GET", u)) {
+				set(Error.CLI_CONNECT);
 				return null;
 			}
 
 			userAgent(headers);
 
 			// connect
-			HttpURLConnection huc = null;
+			HttpURLConnection huc;
 
 			if (url.toLowerCase().startsWith("https://")) {
 				// https
@@ -463,6 +430,7 @@ public class VIESAPIClient {
 					huc = (HttpURLConnection)u.openConnection();
 				}
 			} else {
+				set(Error.CLI_CONNECT);
 				return null;
 			}
 				
@@ -481,15 +449,23 @@ public class VIESAPIClient {
 			
 			// response
 			int code = huc.getResponseCode();
-			
-			if (code != 200) {
+			Document doc = dbf.newDocumentBuilder().parse(code == 200 ? huc.getInputStream() : huc.getErrorStream());
+
+			if (doc == null) {
+				set(Error.CLI_RESPONSE);
 				return null;
 			}
-			
-			out = read(huc.getInputStream(), true);
 
-			return out;
-		} catch (Exception ignored) {
+			String err = getString(doc, "/result/error/code", null);
+
+			if (err != null && !err.isEmpty()) {
+				set(Integer.parseInt(err), getString(doc, "/result/error/description", null));
+				return null;
+			}
+
+			return doc;
+		} catch (Exception e) {
+			set(Error.CLI_EXCEPTION, e.getMessage());
 		} finally {
     		if (set) {
     			Authenticator.setDefault(null);
@@ -499,45 +475,6 @@ public class VIESAPIClient {
 		return null;
 	}
 
-	/**
-	 * Read input stream to array
-	 * @param stream input stream
-	 * @param close if true stream will be closed after data read
-	 * @return array of bytes read
-	 */
-	private byte[] read(InputStream stream, boolean close)
-		throws IOException
-	{
-		ByteArrayOutputStream baos = new ByteArrayOutputStream();
-
-		copy(stream, baos, close);
-		
-		return baos.toByteArray();
-	}
-
-	/**
-	 * Copy data between streams
-	 * @param in input stream
-	 * @param out output stream
-	 * @param close if true both streams will be closed
-	 */
-	private void copy(InputStream in, OutputStream out, boolean close)
-		throws IOException
-	{
-		byte[] b = new byte[8192];
-
-		int read;
-
-		while ((read = in.read(b)) > 0) {
-			out.write(b, 0, read);
-		}
-
-		if (close) {
-			in.close();
-			out.close();
-		}
-	}
-	
 	/**
 	 * Get random hex string
 	 * @param length lenght of string

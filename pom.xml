@@ -5,7 +5,7 @@
 	
 	<groupId>eu.viesapi</groupId>
 	<artifactId>viesapi-client</artifactId>
-	<version>1.2.5</version>
+	<version>1.2.6</version>
 	
 	<name>viesapi-java-client</name>
 	<description>VIES API Service Client for Java</description>
@@ -31,27 +31,41 @@
 			<organizationUrl>https://www.netcat.pl</organizationUrl>
 		</developer>
 	</developers>
-	
+
+	<distributionManagement>
+		<repository>
+			<id>viesapi</id>
+			<url>https://viesapi.eu/maven/releases</url>
+		</repository>
+		<snapshotRepository>
+			<id>viesapi</id>
+			<url>https://viesapi.eu/maven/snapshots</url>
+		</snapshotRepository>
+	</distributionManagement>
+
 	<properties>
-		<java.version>1.8</java.version>
+		<java.version>11</java.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 	
 	<build>
 		<plugins>
+			<!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-compiler-plugin -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.10.1</version>
+				<version>3.11.0</version>
 				<configuration>
 					<source>${java.version}</source>
 					<target>${java.version}</target>
 				</configuration>
 			</plugin>
+
+			<!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-source-plugin -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-source-plugin</artifactId>
-				<version>3.2.1</version>
+				<version>3.3.0</version>
 				<executions>
 					<execution>
 						<id>attach-sources</id>
@@ -61,10 +75,12 @@
 					</execution>
 				</executions>
 			</plugin>
+
+			<!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-javadoc-plugin -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-javadoc-plugin</artifactId>
-				<version>3.4.1</version>
+				<version>3.6.0</version>
 				<executions>
 					<execution>
 						<id>attach-javadocs</id>
