@@ -1,5 +1,5 @@
 /**
- * Copyright 2022-2023 NETCAT (www.netcat.pl)
+ * Copyright 2022-2025 NETCAT (www.netcat.pl)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  * 
  * @author NETCAT <firma@netcat.pl>
- * @copyright 2022-2023 NETCAT (www.netcat.pl)
+ * @copyright 2022-2025 NETCAT (www.netcat.pl)
  * @license http://www.apache.org/licenses/LICENSE-2.0
  */
 
@@ -56,6 +56,15 @@ public class Program {
 
 			if (vies != null) {
 				System.out.println(vies);
+			} else {
+				System.out.println("Error: " + viesapi.getLastError() + " (code: " + viesapi.getLastErrorCode() + ")");
+			}
+
+			// Get VIES data from VIES system returning parsed data
+			VIESData vies_parsed = viesapi.getVIESDataParsed(nip_eu);
+
+			if (vies_parsed != null) {
+				System.out.println(vies_parsed);
 			} else {
 				System.out.println("Error: " + viesapi.getLastError() + " (code: " + viesapi.getLastErrorCode() + ")");
 			}

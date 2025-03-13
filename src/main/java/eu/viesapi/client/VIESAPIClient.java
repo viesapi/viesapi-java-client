@@ -1,5 +1,5 @@
 /**
- * Copyright 2022-2023 NETCAT (www.netcat.pl)
+ * Copyright 2022-2025 NETCAT (www.netcat.pl)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  * 
  * @author NETCAT <firma@netcat.pl>
- * @copyright 2022-2023 NETCAT (www.netcat.pl)
+ * @copyright 2022-2025 NETCAT (www.netcat.pl)
  * @license http://www.apache.org/licenses/LICENSE-2.0
  */
 
@@ -51,7 +51,7 @@ import java.util.Properties;
  */
 public class VIESAPIClient {
 	
-	public final static String VERSION = "1.2.6";
+	public final static String VERSION = "1.2.7";
 
 	public final static String PRODUCTION_URL = "https://viesapi.eu/api";
 	public final static String TEST_URL = "https://viesapi.eu/api-test";
@@ -215,7 +215,73 @@ public class VIESAPIClient {
 		
 		return null;
 	}
-	
+
+	/**
+	 * Get VIES data for specified number from EU VIES system
+	 * @param euvat EU VAT number with 2-letter country prefix
+	 * @return VIES data or null in case of error
+	 */
+	public VIESData getVIESDataParsed(String euvat)
+	{
+		try {
+			// clear error
+			clear();
+
+			// validate number and construct path
+			String suffix = null;
+
+			if ((suffix = getPathSuffix(Number.EUVAT, euvat)) == null) {
+				return null;
+			}
+
+			// prepare url
+			String url = (this.url.toString() + "/get/vies/parsed/" + suffix);
+
+			// prepare request
+			Document doc = get(url);
+
+			if (doc == null) {
+				return null;
+			}
+
+			VIESData vies = new VIESData();
+
+			vies.setUid(getString(doc, "/result/vies/uid", null));
+			vies.setCountryCode(getString(doc, "/result/vies/countryCode", null));
+			vies.setVatNumber(getString(doc, "/result/vies/vatNumber", null));
+
+			vies.setValid(getString(doc, "/result/vies/valid", "false").equals("true"));
+
+			vies.setTraderName(getString(doc, "/result/vies/traderName", null));
+			vies.setTraderCompanyType(getString(doc, "/result/vies/traderCompanyType", null));
+			vies.setTraderAddress(getString(doc, "/result/vies/traderAddress", null));
+
+			String country = getString(doc, "/result/vies/traderAddressComponents/country", null);
+
+			if (country != null && !country.isEmpty()) {
+				AddressComponents ac = new AddressComponents();
+				ac.setCountry(country);
+				ac.setPostalCode(getString(doc, "/result/vies/traderAddressComponents/postalCode", null));
+				ac.setCity(getString(doc, "/result/vies/traderAddressComponents/city", null));
+				ac.setStreet(getString(doc, "/result/vies/traderAddressComponents/street", null));
+				ac.setStreetNumber(getString(doc, "/result/vies/traderAddressComponents/streetNumber", null));
+				ac.setHouseNumber(getString(doc, "/result/vies/traderAddressComponents/houseNumber", null));
+
+				vies.setTraderAddressComponents(ac);
+			}
+
+			vies.setId(getString(doc, "/result/vies/id", null));
+			vies.setDate(getDate(doc, "/result/vies/date"));
+			vies.setSource(getString(doc, "/result/vies/source", null));
+
+			return vies;
+		} catch (Exception e) {
+			set(Error.CLI_EXCEPTION, e.getMessage());
+		}
+
+		return null;
+	}
+
 	/**
 	 * Get current account status
 	 * @return account status or null in case of error
@@ -246,6 +312,7 @@ public class VIESAPIClient {
 			status.setSubscriptionPrice(Float.parseFloat(getString(doc, "/result/account/billingPlan/subscriptionPrice", "0")));
 			status.setItemPrice(Float.parseFloat(getString(doc, "/result/account/billingPlan/itemPrice", "0")));
 			status.setItemPriceStatus(Float.parseFloat(getString(doc, "/result/account/billingPlan/itemPriceCheckStatus", "0")));
+			status.setItemPriceParsed(Float.parseFloat(getString(doc, "/result/account/billingPlan/itemPriceStatusParsed", "0")));
 
 			status.setLimit(Integer.parseInt(getString(doc, "/result/account/billingPlan/limit", "0")));
 			status.setRequestDelay(Integer.parseInt(getString(doc, "/result/account/billingPlan/requestDelay", "0")));
@@ -259,8 +326,10 @@ public class VIESAPIClient {
 			status.setMonitor(getString(doc, "/result/account/billingPlan/monitor", "false").equals("true"));
 
 			status.setFuncGetViesData(getString(doc, "/result/account/billingPlan/funcGetVIESData", "false").equals("true"));
+			status.setFuncGetViesDataParsed(getString(doc, "/result/account/billingPlan/funcGetVIESDataParsed", "false").equals("true"));
 
 			status.setViesDataCount(Integer.parseInt(getString(doc, "/result/account/requests/viesData", "0")));
+			status.setViesDataParsedCount(Integer.parseInt(getString(doc, "/result/account/requests/viesDataParsed", "0")));
 			status.setTotalCount(Integer.parseInt(getString(doc, "/result/account/requests/total", "0")));
 			
 			return status;

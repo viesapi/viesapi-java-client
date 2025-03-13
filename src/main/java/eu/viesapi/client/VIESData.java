@@ -1,5 +1,5 @@
 /**
- * Copyright 2022-2023 NETCAT (www.netcat.pl)
+ * Copyright 2022-2025 NETCAT (www.netcat.pl)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  * 
  * @author NETCAT <firma@netcat.pl>
- * @copyright 2022-2023 NETCAT (www.netcat.pl)
+ * @copyright 2022-2025 NETCAT (www.netcat.pl)
  * @license http://www.apache.org/licenses/LICENSE-2.0
  */
 
@@ -37,6 +37,7 @@ public class VIESData {
 	protected String traderName;
 	protected String traderCompanyType;
 	protected String traderAddress;
+	protected AddressComponents traderAddressComponents;
 
 	protected String id;
 	protected Date date;
@@ -176,6 +177,22 @@ public class VIESData {
 	}
 
 	/**
+	 * Trader address components
+	 * @return address components
+	 */
+	public AddressComponents getTraderAddressComponents() {
+		return traderAddressComponents;
+	}
+
+	/**
+	 * Trader address components
+	 * @param traderAddressComponents address components
+	 */
+	public void setTraderAddressComponents(AddressComponents traderAddressComponents) {
+		this.traderAddressComponents = traderAddressComponents;
+	}
+
+	/**
 	 * Request ID from EU VIES system
 	 * @return the id
 	 */
@@ -239,6 +256,7 @@ public class VIESData {
 			+ ", traderName = " + traderName
 			+ ", traderCompanyType = " + traderCompanyType
 			+ ", traderAddress = " + traderAddress
+			+ ", traderAddressComponents = " + traderAddressComponents
 			+ ", id = " + id
 			+ ", date = " + (date != null ? date.toString() : "")
 			+ ", source = " + source

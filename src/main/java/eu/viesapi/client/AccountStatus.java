@@ -1,5 +1,5 @@
 /**
- * Copyright 2022-2023 NETCAT (www.netcat.pl)
+ * Copyright 2022-2025 NETCAT (www.netcat.pl)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  * 
  * @author NETCAT <firma@netcat.pl>
- * @copyright 2022-2023 NETCAT (www.netcat.pl)
+ * @copyright 2022-2025 NETCAT (www.netcat.pl)
  * @license http://www.apache.org/licenses/LICENSE-2.0
  */
 
@@ -36,6 +36,7 @@ public class AccountStatus {
     protected float subscriptionPrice;
     protected float itemPrice;
     protected float itemPriceStatus;
+	protected float itemPriceParsed;
 
     protected int limit;
     protected int requestDelay;
@@ -49,8 +50,10 @@ public class AccountStatus {
     protected boolean monitor;
 
     protected boolean funcGetViesData;
+	protected boolean funcGetViesDataParsed;
 
     protected int viesDataCount;
+	protected int viesDataParsedCount;
     protected int totalCount;
 	
 	/**
@@ -184,6 +187,24 @@ public class AccountStatus {
 	public void setItemPriceStatus(float itemPriceStatus)
 	{
 		this.itemPriceStatus = itemPriceStatus;
+	}
+
+	/**
+	 * Net price of a single query for an individual plan
+	 * @return net price
+	 */
+	public float getItemPriceparsed()
+	{
+		return itemPriceParsed;
+	}
+
+	/**
+	 * Net price of a single query for an individual plan
+	 * @param itemPriceParsed net price of parsed data
+	 */
+	public void setItemPriceParsed(float itemPriceParsed)
+	{
+		this.itemPriceParsed = itemPriceParsed;
 	}
 
 	/**
@@ -358,12 +379,30 @@ public class AccountStatus {
 	}
 
 	/**
-	 * Access to entity status checking functions in the VIES system
+	 * Access to entity status checking functions returning parsed data in the VIES system
 	 * @param funcGetViesData true if allowed
 	 */
 	public void setFuncGetViesData(boolean funcGetViesData)
 	{
 		this.funcGetViesData = funcGetViesData;
+	}
+
+	/**
+	 * Access to entity status checking functions in the VIES system
+	 * @return true if allowed
+	 */
+	public boolean isFuncGetViesDataParsed()
+	{
+		return funcGetViesDataParsed;
+	}
+
+	/**
+	 * Access to entity status checking functions returning parsed data in the VIES system
+	 * @param funcGetViesDataParsed true if allowed
+	 */
+	public void setFuncGetViesDataParsed(boolean funcGetViesDataParsed)
+	{
+		this.funcGetViesDataParsed = funcGetViesDataParsed;
 	}
 
 	/**
@@ -382,6 +421,24 @@ public class AccountStatus {
 	public void setViesDataCount(int viesDataCount)
 	{
 		this.viesDataCount = viesDataCount;
+	}
+
+	/**
+	 * Number of queries to the VIES system performed in the current month
+	 * @return number of queries
+	 */
+	public int getViesDataParsedCount()
+	{
+		return viesDataParsedCount;
+	}
+
+	/**
+	 * Number of queries to the VIES system performed in the current month
+	 * @param viesDataParsedCount number of queries
+	 */
+	public void setViesDataParsedCount(int viesDataParsedCount)
+	{
+		this.viesDataParsedCount = viesDataParsedCount;
 	}
 
 	/**
@@ -413,6 +470,7 @@ public class AccountStatus {
 			+ ", subscriptionPrice = " + subscriptionPrice
 			+ ", itemPrice = " + itemPrice
 			+ ", itemPriceStatus = " + itemPriceStatus
+			+ ", itemPriceParsed = " + itemPriceParsed
 
 			+ ", limit = " + limit
 			+ ", requestDelay = " + requestDelay
@@ -426,8 +484,10 @@ public class AccountStatus {
 			+ ", monitor = " + monitor
 
 			+ ", funcGetViesData = " + funcGetViesData
+			+ ", funcGetViesDataParsed = " + funcGetViesDataParsed
 
 			+ ", viesDataCount = " + viesDataCount
+			+ ", viesDataparsedCount = " + viesDataParsedCount
 			+ ", totalCount = " + totalCount
 			+ "]";
 	}
