@@ -39,19 +39,17 @@ import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.Proxy;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.Enumeration;
-import java.util.Properties;
+import java.util.*;
 
 /**
  * VIES API service client
  */
 public class VIESAPIClient {
 	
-	public final static String VERSION = "1.2.7";
+	public final static String VERSION = "1.2.8";
 
 	public final static String PRODUCTION_URL = "https://viesapi.eu/api";
 	public final static String TEST_URL = "https://viesapi.eu/api-test";
@@ -283,6 +281,148 @@ public class VIESAPIClient {
 	}
 
 	/**
+	 * Upload batch of VAT numbers and get their current VAT statuses and traders data
+	 * @param numbers List of EU VAT numbers with 2-letter country prefix
+	 * @return Batch token for checking status and getting the result or null in case of error
+	 */
+	public String getVIESDataAsync(List<String> numbers)
+	{
+		try {
+			// clear error
+			clear();
+
+			// validate input
+			if (numbers == null || numbers.size() < 2 || numbers.size() > 99) {
+				set(Error.CLI_BATCH_SIZE);
+				return null;
+			}
+
+			// prepare request
+			StringBuilder xml = new StringBuilder("<?xml version=\"1.0\" encoding=\"utf-8\"?>\r\n"
+				+ "<request>\r\n"
+				+ "  <batch>\r\n"
+				+ "    <numbers>\r\n");
+
+			for (String number : numbers) {
+				if (!EUVAT.isValid(number)) {
+					set(Error.CLI_EUVAT);
+					return null;
+				}
+
+				xml.append("      <number>").append(EUVAT.normalize(number)).append("</number>\r\n");
+			}
+
+			xml.append("    </numbers>\r\n"
+				+ "  </batch>\r\n"
+				+ "</request>");
+
+			// prepare url
+			String url = (this.url.toString() + "/batch/vies");
+
+			// prepare request
+			Document doc = post(url, "text/xml; charset=UTF-8", xml.toString().getBytes(StandardCharsets.UTF_8));
+
+			if (doc == null) {
+				return null;
+			}
+
+			// parse response
+			String token = getString(doc, "/result/batch/token", null);
+
+			if (token == null || token.isEmpty()) {
+				set(Error.CLI_RESPONSE);
+				return null;
+			}
+
+			return token;
+		} catch (Exception e) {
+			set(Error.CLI_EXCEPTION, e.getMessage());
+		}
+
+		return null;
+	}
+
+	/**
+	 * Check batch result and download data
+	 * @param token Batch token received from getVIESDataAsync function
+	 * @return account status or null in case of error
+	 */
+	public BatchResult getVIESDataAsyncResult(String token)
+	{
+		try {
+			// clear error
+			clear();
+
+			// validate input
+			if (token == null || token.isEmpty() || !isUuid(token)) {
+				set(Error.CLI_INPUT);
+				return null;
+			}
+
+			// prepare url
+			String url = (this.url.toString()  + "/batch/vies/" + token);
+			
+			// prepare request
+			Document doc = get(url);
+			
+			if (doc == null) {
+				return null;
+			}
+
+			// parse response
+			BatchResult br = new BatchResult();
+
+			for (int i = 1; ; i++) {
+				String uid = getString(doc, "/result/batch/numbers/vies[" + i + "]/uid", null);
+
+				if (uid == null || uid.isEmpty()) {
+					break;
+				}
+
+				VIESData vd = new VIESData();
+
+				vd.setUid(uid);
+				vd.setCountryCode(getString(doc, "/result/batch/numbers/vies[" + i + "]/countryCode", null));
+				vd.setVatNumber(getString(doc, "/result/batch/numbers/vies[" + i + "]/vatNumber", null));
+				vd.setValid(getString(doc, "/result/batch/numbers/vies[" + i + "]/valid", "false").equals("true"));
+				vd.setTraderName(getString(doc, "/result/batch/numbers/vies[" + i + "]/traderName", null));
+				vd.setTraderCompanyType(getString(doc, "/result/batch/numbers/vies[" + i + "]/traderCompanyType", null));
+				vd.setTraderAddress(getString(doc, "/result/batch/numbers/vies[" + i + "]/traderAddress", null));
+				vd.setId(getString(doc, "/result/batch/numbers/vies[" + i + "]/id", null));
+				vd.setDate(getDate(doc, "/result/batch/numbers/vies[" + i + "]/date"));
+				vd.setSource(getString(doc, "/result/batch/numbers/vies[" + i + "]/source", null));
+
+				br.addNumber(vd);
+			}
+
+			for (int i = 1; ; i++) {
+				String uid = getString(doc, "/result/batch/errors/error[" + i + "]/uid", null);
+
+				if (uid == null || uid.isEmpty()) {
+					break;
+				}
+
+				VIESError ve = new VIESError();
+
+				ve.setUid(uid);
+				ve.setCountryCode(getString(doc, "/result/batch/errors/error[" + i + "]/countryCode", null));
+				ve.setVatNumber(getString(doc, "/result/batch/errors/error[" + i + "]/vatNumber", null));
+				ve.setError(getString(doc, "/result/batch/errors/error[" + i + "]/error", null));
+				ve.setDate(getDate(doc, "/result/batch/errors/error[" + i + "]/date"));
+				ve.setSource(getString(doc, "/result/batch/errors/error[" + i + "]/source", null));
+
+				br.addError(ve);
+			}
+
+			return br;
+		} catch (Exception e) {
+			set(Error.CLI_EXCEPTION, e.getMessage());
+		}
+		
+		return null;
+	}
+
+	/**
 	 * Get current account status
 	 * @return account status or null in case of error
 	 */
@@ -291,19 +431,19 @@ public class VIESAPIClient {
 		try {
 			// clear error
 			clear();
-			
+
 			// prepare url
 			String url = (this.url.toString()  + "/check/account/status");
-			
+
 			// prepare request
 			Document doc = get(url);
-			
+
 			if (doc == null) {
 				return null;
 			}
-			
+
 			AccountStatus status = new AccountStatus();
-			
+
 			status.setUid(getString(doc, "/result/account/uid", null));
 			status.setType(getString(doc, "/result/account/type", null));
 			status.setValidTo(getDateTime(doc, "/result/account/validTo"));
@@ -331,12 +471,12 @@ public class VIESAPIClient {
 			status.setViesDataCount(Integer.parseInt(getString(doc, "/result/account/requests/viesData", "0")));
 			status.setViesDataParsedCount(Integer.parseInt(getString(doc, "/result/account/requests/viesDataParsed", "0")));
 			status.setTotalCount(Integer.parseInt(getString(doc, "/result/account/requests/total", "0")));
-			
+
 			return status;
 		} catch (Exception e) {
 			set(Error.CLI_EXCEPTION, e.getMessage());
 		}
-		
+
 		return null;
 	}
 
@@ -545,6 +685,122 @@ public class VIESAPIClient {
 	}
 
 	/**
+	 * Perform HTTP POST
+	 * @param url request URL
+	 * @param type content type
+	 * @param content content bytes
+	 * @return XML response or null
+	 */
+	private Document post(String url, String type, byte[] content)
+	{
+		boolean set = false;
+
+		try {
+			if (url == null || url.isEmpty()) {
+				set(Error.CLI_CONNECT);
+				return null;
+			}
+
+			URL u = new URL(url);
+			Proxy p = null;
+
+			if (wp != null && !wp.isExcluded(u.getHost())) {
+				p = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(wp.getHost(), wp.getPort()));
+
+				Authenticator.setDefault(wp);
+				set = true;
+			}
+
+			// headers
+			Properties headers = new Properties();
+
+			headers.setProperty("Accept", "text/xml");
+
+			if (!auth(headers, "POST", u)) {
+				set(Error.CLI_CONNECT);
+				return null;
+			}
+
+			headers.setProperty("Content-Length", "" + content.length);
+			headers.setProperty("Content-Type", type);
+
+			userAgent(headers);
+
+			// connect
+			HttpURLConnection huc;
+
+			if (url.toLowerCase().startsWith("https://")) {
+				// https
+				if (p != null) {
+					huc = (HttpsURLConnection)u.openConnection(p);
+				} else {
+					huc = (HttpsURLConnection)u.openConnection();
+				}
+
+				if (hv != null) {
+					((HttpsURLConnection)huc).setHostnameVerifier(hv);
+				}
+
+				if (ssf != null) {
+					((HttpsURLConnection)huc).setSSLSocketFactory(ssf);
+				}
+			} else if (url.toLowerCase().startsWith("http://")) {
+				// http
+				if (p != null) {
+					huc = (HttpURLConnection)u.openConnection(p);
+				} else {
+					huc = (HttpURLConnection)u.openConnection();
+				}
+			} else {
+				set(Error.CLI_CONNECT);
+				return null;
+			}
+
+			huc.setRequestMethod("POST");
+
+			Enumeration<?> keys = headers.keys();
+
+			while (keys.hasMoreElements()) {
+				String key = (String)keys.nextElement();
+				huc.setRequestProperty(key, headers.getProperty(key));
+			}
+
+			huc.setUseCaches(false);
+			huc.setDoInput(true);
+			huc.setDoOutput(true);
+
+			// request
+			huc.getOutputStream().write(content);
+
+			// response
+			int code = huc.getResponseCode();
+			Document doc = dbf.newDocumentBuilder().parse(code == 200 ? huc.getInputStream() : huc.getErrorStream());
+
+			if (doc == null) {
+				set(Error.CLI_RESPONSE);
+				return null;
+			}
+
+			String err = getString(doc, "/result/error/code", null);
+
+			if (err != null && !err.isEmpty()) {
+				set(Integer.parseInt(err), getString(doc, "/result/error/description", null));
+				return null;
+			}
+
+			return doc;
+		} catch (Exception e) {
+			set(Error.CLI_EXCEPTION, e.getMessage());
+		} finally {
+			if (set) {
+				Authenticator.setDefault(null);
+			}
+		}
+
+		return null;
+	}
+
+	/**
 	 * Get random hex string
 	 * @param length lenght of string
 	 * @return random hex string
@@ -709,5 +965,21 @@ public class VIESAPIClient {
 		}
 		    
 		return path;
+	}
+
+	/**
+	 * Check if string is valid UUID
+	 * @param uuid string to check
+	 * @return true if string contains valid UUID
+	 */
+	private boolean isUuid(String uuid)
+	{
+		try {
+			UUID u = UUID.fromString(uuid);
+			return true;
+		} catch (Exception ignored) {
+		}
+
+		return false;
 	}
 }
