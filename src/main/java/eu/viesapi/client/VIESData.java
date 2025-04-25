@@ -35,6 +35,7 @@ public class VIESData {
 	protected boolean valid;
 	
 	protected String traderName;
+	protected NameComponents traderNameComponents;
 	protected String traderCompanyType;
 	protected String traderAddress;
 	protected AddressComponents traderAddressComponents;
@@ -138,6 +139,24 @@ public class VIESData {
 	public void setTraderName(String traderName)
 	{
 		this.traderName = traderName;
+	}
+
+	/**
+	 * Trader name components
+	 * @return tader name components
+	 */
+	public NameComponents getTraderNameComponents()
+	{
+		return traderNameComponents;
+	}
+
+	/**
+	 * Trader name components
+	 * @param traderNameComponents trader name components
+	 */
+	public void setTraderNameComponents(NameComponents traderNameComponents)
+	{
+		this.traderNameComponents = traderNameComponents;
 	}
 
 	/**
@@ -254,6 +273,7 @@ public class VIESData {
 			+ ", vatNumber = " + vatNumber
 			+ ", valid = " + valid
 			+ ", traderName = " + traderName
+			+ ", traderNameComponents = " + traderNameComponents
 			+ ", traderCompanyType = " + traderCompanyType
 			+ ", traderAddress = " + traderAddress
 			+ ", traderAddressComponents = " + traderAddressComponents

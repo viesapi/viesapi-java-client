@@ -49,7 +49,7 @@ import java.util.*;
  */
 public class VIESAPIClient {
 	
-	public final static String VERSION = "1.2.8";
+	public final static String VERSION = "1.2.9";
 
 	public final static String PRODUCTION_URL = "https://viesapi.eu/api";
 	public final static String TEST_URL = "https://viesapi.eu/api-test";
@@ -247,10 +247,21 @@ public class VIESAPIClient {
 			vies.setUid(getString(doc, "/result/vies/uid", null));
 			vies.setCountryCode(getString(doc, "/result/vies/countryCode", null));
 			vies.setVatNumber(getString(doc, "/result/vies/vatNumber", null));
-
 			vies.setValid(getString(doc, "/result/vies/valid", "false").equals("true"));
-
 			vies.setTraderName(getString(doc, "/result/vies/traderName", null));
+
+			String name = getString(doc, "/result/vies/traderNameComponents/name", null);
+
+			if (name != null && !name.isEmpty()) {
+				NameComponents nc = new NameComponents();
+				nc.setName(name);
+				nc.setLegalForm(getString(doc, "/result/vies/traderNameComponents/legalForm", null));
+				nc.setLegalFormCanonicalId(LegalForm.parse(Integer.parseInt(getString(doc, "/result/vies/traderNameComponents/legalFormCanonicalId", "0"))));
+				nc.setLegalFormCanonicalName(getString(doc, "/result/vies/traderNameComponents/legalFormCanonicalName", null));
+
+				vies.setTraderNameComponents(nc);
+			}
+
 			vies.setTraderCompanyType(getString(doc, "/result/vies/traderCompanyType", null));
 			vies.setTraderAddress(getString(doc, "/result/vies/traderAddress", null));
 
