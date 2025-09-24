@@ -31,6 +31,7 @@ public class AddressComponents {
     protected String street;
     protected String streetNumber;
     protected String houseNumber;
+    protected String other;
     
     public AddressComponents() {
     }
@@ -131,6 +132,24 @@ public class AddressComponents {
         this.houseNumber = houseNumber;
     }
 
+    /**
+     * Get other address details (area name, building name, floor number, etc.)
+     * @return other details
+     */
+    public String getOther()
+    {
+        return other;
+    }
+
+    /**
+     * Set other address details (area name, building name, floor number, etc.)
+     * @param other other details
+     */
+    public void setOther(String other)
+    {
+        this.other = other;
+    }
+
     @Override
     public String toString()
     {
@@ -138,9 +157,9 @@ public class AddressComponents {
             + ", postalCode = " + postalCode
             + ", city = " + city
             + ", street = " + street
-
             + ", streetNumber = " + streetNumber
             + ", houseNumber = " + houseNumber
+            + ", other = " + other
             + "]";
     }
 }

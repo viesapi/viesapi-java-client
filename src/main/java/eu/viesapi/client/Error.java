@@ -98,7 +98,7 @@ public class Error {
 		codes.put(CLI_EXCEPTION,   "Function generated an exception");
 		codes.put(CLI_DATEFORMAT,  "Date has an invalid format");
 		codes.put(CLI_INPUT,       "Invalid input parameter");
-		codes.put(CLI_BATCH_SIZE,  "Batch size limit exceeded [2-99]");
+		codes.put(CLI_BATCH_SIZE,  "Batch size limit exceeded [3-99]");
 	}
 
 	/**

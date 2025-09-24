@@ -20,6 +20,7 @@
 
 package eu.viesapi.client;
 
+import jakarta.xml.bind.DatatypeConverter;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 
@@ -28,7 +29,6 @@ import javax.crypto.spec.SecretKeySpec;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSocketFactory;
-import javax.xml.bind.DatatypeConverter;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
@@ -49,7 +49,7 @@ import java.util.*;
  */
 public class VIESAPIClient {
 	
-	public final static String VERSION = "1.2.9";
+	public final static String VERSION = "1.3.0";
 
 	public final static String PRODUCTION_URL = "https://viesapi.eu/api";
 	public final static String TEST_URL = "https://viesapi.eu/api-test";
@@ -190,23 +190,7 @@ public class VIESAPIClient {
 				return null;
 			}
 
-			VIESData vies = new VIESData();
-			
-			vies.setUid(getString(doc, "/result/vies/uid", null));
-			vies.setCountryCode(getString(doc, "/result/vies/countryCode", null));
-			vies.setVatNumber(getString(doc, "/result/vies/vatNumber", null));
-			
-			vies.setValid(getString(doc, "/result/vies/valid", "false").equals("true"));
-			
-			vies.setTraderName(getString(doc, "/result/vies/traderName", null));
-			vies.setTraderCompanyType(getString(doc, "/result/vies/traderCompanyType", null));
-			vies.setTraderAddress(getString(doc, "/result/vies/traderAddress", null));
-
-			vies.setId(getString(doc, "/result/vies/id", null));
-			vies.setDate(getDate(doc, "/result/vies/date"));
-			vies.setSource(getString(doc, "/result/vies/source", null));
-
-			return vies;
+			return parse(doc, "/result/vies");
 		} catch (Exception e) {
 			set(Error.CLI_EXCEPTION, e.getMessage());
 		}
@@ -242,48 +226,7 @@ public class VIESAPIClient {
 				return null;
 			}
 
-			VIESData vies = new VIESData();
-
-			vies.setUid(getString(doc, "/result/vies/uid", null));
-			vies.setCountryCode(getString(doc, "/result/vies/countryCode", null));
-			vies.setVatNumber(getString(doc, "/result/vies/vatNumber", null));
-			vies.setValid(getString(doc, "/result/vies/valid", "false").equals("true"));
-			vies.setTraderName(getString(doc, "/result/vies/traderName", null));
-
-			String name = getString(doc, "/result/vies/traderNameComponents/name", null);
-
-			if (name != null && !name.isEmpty()) {
-				NameComponents nc = new NameComponents();
-				nc.setName(name);
-				nc.setLegalForm(getString(doc, "/result/vies/traderNameComponents/legalForm", null));
-				nc.setLegalFormCanonicalId(LegalForm.parse(Integer.parseInt(getString(doc, "/result/vies/traderNameComponents/legalFormCanonicalId", "0"))));
-				nc.setLegalFormCanonicalName(getString(doc, "/result/vies/traderNameComponents/legalFormCanonicalName", null));
-
-				vies.setTraderNameComponents(nc);
-			}
-
-			vies.setTraderCompanyType(getString(doc, "/result/vies/traderCompanyType", null));
-			vies.setTraderAddress(getString(doc, "/result/vies/traderAddress", null));
-
-			String country = getString(doc, "/result/vies/traderAddressComponents/country", null);
-
-			if (country != null && !country.isEmpty()) {
-				AddressComponents ac = new AddressComponents();
-				ac.setCountry(country);
-				ac.setPostalCode(getString(doc, "/result/vies/traderAddressComponents/postalCode", null));
-				ac.setCity(getString(doc, "/result/vies/traderAddressComponents/city", null));
-				ac.setStreet(getString(doc, "/result/vies/traderAddressComponents/street", null));
-				ac.setStreetNumber(getString(doc, "/result/vies/traderAddressComponents/streetNumber", null));
-				ac.setHouseNumber(getString(doc, "/result/vies/traderAddressComponents/houseNumber", null));
-
-				vies.setTraderAddressComponents(ac);
-			}
-
-			vies.setId(getString(doc, "/result/vies/id", null));
-			vies.setDate(getDate(doc, "/result/vies/date"));
-			vies.setSource(getString(doc, "/result/vies/source", null));
-
-			return vies;
+            return parse(doc, "/result/vies");
 		} catch (Exception e) {
 			set(Error.CLI_EXCEPTION, e.getMessage());
 		}
@@ -303,7 +246,7 @@ public class VIESAPIClient {
 			clear();
 
 			// validate input
-			if (numbers == null || numbers.size() < 2 || numbers.size() > 99) {
+			if (numbers == null || numbers.size() < 3 || numbers.size() > 99) {
 				set(Error.CLI_BATCH_SIZE);
 				return null;
 			}
@@ -383,6 +326,8 @@ public class VIESAPIClient {
 			// parse response
 			BatchResult br = new BatchResult();
 
+            br.setUid(getString(doc, "/result/batch/uid", null));
+
 			for (int i = 1; ; i++) {
 				String uid = getString(doc, "/result/batch/numbers/vies[" + i + "]/uid", null);
 
@@ -390,20 +335,7 @@ public class VIESAPIClient {
 					break;
 				}
 
-				VIESData vd = new VIESData();
-
-				vd.setUid(uid);
-				vd.setCountryCode(getString(doc, "/result/batch/numbers/vies[" + i + "]/countryCode", null));
-				vd.setVatNumber(getString(doc, "/result/batch/numbers/vies[" + i + "]/vatNumber", null));
-				vd.setValid(getString(doc, "/result/batch/numbers/vies[" + i + "]/valid", "false").equals("true"));
-				vd.setTraderName(getString(doc, "/result/batch/numbers/vies[" + i + "]/traderName", null));
-				vd.setTraderCompanyType(getString(doc, "/result/batch/numbers/vies[" + i + "]/traderCompanyType", null));
-				vd.setTraderAddress(getString(doc, "/result/batch/numbers/vies[" + i + "]/traderAddress", null));
-				vd.setId(getString(doc, "/result/batch/numbers/vies[" + i + "]/id", null));
-				vd.setDate(getDate(doc, "/result/batch/numbers/vies[" + i + "]/date"));
-				vd.setSource(getString(doc, "/result/batch/numbers/vies[" + i + "]/source", null));
-
-				br.addNumber(vd);
+				br.addNumber(parse(doc, "/result/batch/numbers/vies[" + i + "]"));
 			}
 
 			for (int i = 1; ; i++) {
@@ -491,7 +423,55 @@ public class VIESAPIClient {
 		return null;
 	}
 
-	/**
+    /**
+     * Get current EU VIES system status
+     * @return VIES status or null in case of error
+     */
+    public VIESStatus getVIESStatus()
+    {
+        try {
+            // clear error
+            clear();
+
+            // prepare url
+            String url = (this.url.toString()  + "/check/vies/status");
+
+            // prepare request
+            Document doc = get(url);
+
+            if (doc == null) {
+                return null;
+            }
+
+            VIESStatus status = new VIESStatus();
+
+            status.setUid(getString(doc, "/result/vies/uid", null));
+            status.setAvailable(getString(doc, "/result/vies/available", "false").equals("true"));
+
+            for (int i = 1; ; i++) {
+                String code = getString(doc, "/result/vies/countries/country[" + i + "]/countryCode", null);
+
+                if (code == null || code.isEmpty()) {
+                    break;
+                }
+
+                CountryStatus cs = new CountryStatus();
+
+                cs.setCountryCode(code);
+                cs.setStatus(getString(doc, "/result/vies/countries/country[" + i + "]/status", null));
+
+                status.addCountry(cs);
+            }
+
+            return status;
+        } catch (Exception e) {
+            set(Error.CLI_EXCEPTION, e.getMessage());
+        }
+
+        return null;
+    }
+
+    /**
 	 * Get last error code
 	 * @return error code
 	 */
@@ -508,6 +488,59 @@ public class VIESAPIClient {
 	{
 		return err;
 	}
+
+    /**
+     * Parse VIES data from the document
+     * @param doc document object
+     * @param prefix XPath prefix
+     * @return data object
+     */
+    private VIESData parse(Document doc, String prefix)
+    {
+        VIESData vd = new VIESData();
+
+        vd.setUid(getString(doc, prefix + "/uid", null));
+        vd.setCountryCode(getString(doc, prefix + "/countryCode", null));
+        vd.setVatNumber(getString(doc, prefix + "/vatNumber", null));
+        vd.setValid(getString(doc, prefix + "/valid", "false").equals("true"));
+        vd.setTraderName(getString(doc, prefix + "/traderName", null));
+
+        String name = getString(doc, prefix + "/traderNameComponents/name", null);
+
+        if (name != null && !name.isEmpty()) {
+            NameComponents nc = new NameComponents();
+            nc.setName(name);
+            nc.setLegalForm(getString(doc, prefix + "/traderNameComponents/legalForm", null));
+            nc.setLegalFormCanonicalId(LegalForm.parse(Integer.parseInt(getString(doc, prefix + "/traderNameComponents/legalFormCanonicalId", "0"))));
+            nc.setLegalFormCanonicalName(getString(doc, prefix + "/traderNameComponents/legalFormCanonicalName", null));
+
+            vd.setTraderNameComponents(nc);
+        }
+
+        vd.setTraderCompanyType(getString(doc, prefix + "/traderCompanyType", null));
+        vd.setTraderAddress(getString(doc, prefix + "/traderAddress", null));
+
+        String country = getString(doc, prefix + "/traderAddressComponents/country", null);
+
+        if (country != null && !country.isEmpty()) {
+            AddressComponents ac = new AddressComponents();
+            ac.setCountry(country);
+            ac.setPostalCode(getString(doc, prefix + "/traderAddressComponents/postalCode", null));
+            ac.setCity(getString(doc, prefix + "/traderAddressComponents/city", null));
+            ac.setStreet(getString(doc, prefix + "/traderAddressComponents/street", null));
+            ac.setStreetNumber(getString(doc, prefix + "/traderAddressComponents/streetNumber", null));
+            ac.setHouseNumber(getString(doc, prefix + "/traderAddressComponents/houseNumber", null));
+            ac.setOther(getString(doc, prefix + "/traderAddressComponents/other", null));
+
+            vd.setTraderAddressComponents(ac);
+        }
+
+        vd.setId(getString(doc, prefix + "/id", null));
+        vd.setDate(getDate(doc, prefix + "/date"));
+        vd.setSource(getString(doc, prefix + "/source", null));
+
+        return vd;
+    }
 
 	/**
 	 * Clear last error

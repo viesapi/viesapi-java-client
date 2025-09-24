@@ -20,10 +20,7 @@
 
 package eu.viesapi.client.example;
 
-import eu.viesapi.client.AccountStatus;
-import eu.viesapi.client.BatchResult;
-import eu.viesapi.client.VIESAPIClient;
-import eu.viesapi.client.VIESData;
+import eu.viesapi.client.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -46,6 +43,15 @@ public class Program {
 
 			String eu_vat = "PL7171642051";
 
+            // Get current EU VIES system status
+            VIESStatus viesStatus = viesapi.getVIESStatus();
+
+            if (viesStatus != null) {
+                System.out.println(viesStatus);
+            } else {
+                System.out.println("Error: " + viesapi.getLastError() + " (code: " + viesapi.getLastErrorCode() + ")");
+            }
+
 			// Get current account status
 			AccountStatus account = viesapi.getAccountStatus();
 
@@ -65,10 +71,10 @@ public class Program {
 			}
 
 			// Get VIES data from VIES system returning parsed data
-			VIESData vies_parsed = viesapi.getVIESDataParsed(eu_vat);
+			VIESData viesParsed = viesapi.getVIESDataParsed(eu_vat);
 
-			if (vies_parsed != null) {
-				System.out.println(vies_parsed);
+			if (viesParsed != null) {
+				System.out.println(viesParsed);
 			} else {
 				System.out.println("Error: " + viesapi.getLastError() + " (code: " + viesapi.getLastErrorCode() + ")");
 			}

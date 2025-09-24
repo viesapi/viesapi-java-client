@@ -28,6 +28,7 @@ import java.util.List;
  */
 public class BatchResult {
 
+    protected String uid;
 	protected List<VIESData> numbers;
 	protected List<VIESError> errors;
 
@@ -40,7 +41,25 @@ public class BatchResult {
 		errors = new ArrayList<>();
 	}
 
-	/**
+    /**
+     * Unique response ID
+     * @return id
+     */
+    public String getUid()
+    {
+        return uid;
+    }
+
+    /**
+     * Unique response ID
+     * @param uid id
+     */
+    public void setUid(String uid)
+    {
+        this.uid = uid;
+    }
+
+    /**
 	 * Get list of VIES results
 	 * @return list of results
 	 */
@@ -91,7 +110,8 @@ public class BatchResult {
 	@Override
 	public String toString()
 	{
-		return "BatchResult: [numbers = " + numbers
+		return "BatchResult: [uid = " + uid
+            + ", numbers = " + numbers
 			+ ", errors = " + errors
 			+ "]";
 	}
